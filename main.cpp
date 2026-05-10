@@ -96,7 +96,7 @@ cv::Mat flipVerticalIMG(const cv::Mat& img){
     return result;
 }
 
-cv::Mat compareIMG(const cv::Mat& img, const cv::Mat& imgEdited, const cv::Mat& imgEditedGray){
+cv::Mat compare3IMG(const cv::Mat& img, const cv::Mat& imgEdited, const cv::Mat& imgEditedGray){
     cv::Mat result(img.rows, img.cols * 3, CV_8UC3, cv::Scalar(0, 0, 0));
     int maxRow1 = std::min(img.rows, result.rows);
     int maxCol1 = std::min(img.cols, result.cols);
@@ -126,6 +126,42 @@ cv::Mat compareIMG(const cv::Mat& img, const cv::Mat& imgEdited, const cv::Mat& 
     return result;
 }
 
+cv::Mat compare2IMG(const cv::Mat& img, const cv::Mat& imgEditedGray){
+    cv::Mat result(img.rows, img.cols * 2, CV_8UC3, cv::Scalar(0, 0, 0));
+    int maxRow1 = std::min(img.rows, result.rows);
+    int maxCol1 = std::min(img.cols, result.cols);
+    for(int y = 0; y < maxRow1; y++){
+        for(int x = 0; x < maxCol1; x++){
+            cv::Vec3b pixel = img.at<cv::Vec3b>(y, x);
+            result.at<cv::Vec3b>(y, x) = pixel;
+        }
+    }
+    int maxRow2 = std::min(imgEditedGray.rows, result.rows);
+    int maxCol2 = std::min(imgEditedGray.cols, img.cols);
+    for(int y = 0; y < maxRow2; y++){
+        for(int x = 0; x < maxCol2; x++){
+            uchar pixel = imgEditedGray.at<uchar>(y, x);
+            result.at<cv::Vec3b>(y, img.cols + x) = cv::Vec3b(pixel, pixel, pixel);
+        }
+    }
+    return result;
+}
+
+cv::Mat robertCross(const cv::Mat& img){
+    cv::Mat result(img.rows, img.cols, CV_8UC1, cv::Scalar(0));
+    for(int y = 0; y < img.rows - 1; y++){
+        for(int x = 0; x < img.cols - 1; x++){
+            uchar pixel1 = img.at<uchar>(y, x);
+            uchar pixel2 = img.at<uchar>(y + 1, x + 1);
+            uchar pixel3 = img.at<uchar>(y, x + 1);
+            uchar pixel4 = img.at<uchar>(y + 1, x);
+            int Gx = std::abs(pixel1 - pixel2);
+            int Gy = std::abs(pixel3 - pixel4);
+            result.at<uchar>(y, x) = std::min(255, Gx + Gy);
+        }
+    }
+    return result;
+}
 
 int main() {
     const std::string inputPath = "img/gambar.png";
@@ -136,6 +172,7 @@ int main() {
     const std::string PathCompareScale = "img/CompareScale.png";
     const std::string PathCompareFlipHorizontal = "img/CompareFlipHorizontal.png";
     const std::string PathCompareFlipVertical = "img/CompareFlipVertical.png";
+    const std::string PathCompareRobertCross = "img/CompareRobertCross.png";
 
     cv::Mat img = cv::imread(inputPath);
     if (img.empty()) {
@@ -149,12 +186,13 @@ int main() {
     cv::Mat scale = scaleIMG(img, 10);
     cv::Mat flipHorizontal = flipHorizontalIMG(img);
     cv::Mat flipVertical = flipVerticalIMG(img);
-    cv::Mat compareTranslasi = compareIMG(img, translasi, imgBGRtoGray(translasi));
-    cv::Mat compareRotasi = compareIMG(img, rotasi, imgBGRtoGray(rotasi));
-    cv::Mat compareScale = compareIMG(img, scale, imgBGRtoGray(scale));
-    cv::Mat compareFlipHorizontal = compareIMG(img, flipHorizontal, imgBGRtoGray(flipHorizontal));
-    cv::Mat compareFlipVertical = compareIMG(img, flipVertical, imgBGRtoGray(flipVertical));
-    cv::Mat compareImgNegGray = compareIMG(img, imgToNegative(img), imgBGRtoGray(img));
+    cv::Mat compareTranslasi = compare3IMG(img, translasi, imgBGRtoGray(translasi));
+    cv::Mat compareRotasi = compare3IMG(img, rotasi, imgBGRtoGray(rotasi));
+    cv::Mat compareScale = compare3IMG(img, scale, imgBGRtoGray(scale));
+    cv::Mat compareFlipHorizontal = compare3IMG(img, flipHorizontal, imgBGRtoGray(flipHorizontal));
+    cv::Mat compareFlipVertical = compare3IMG(img, flipVertical, imgBGRtoGray(flipVertical));
+    cv::Mat compareImgNegGray = compare3IMG(img, imgToNegative(img), imgBGRtoGray(img));
+    cv::Mat compareRobertCross = compare2IMG(img, robertCross(gray));
 
     if (!cv::imwrite(PathCompareImgNegGray, compareImgNegGray)) {
         std::cerr << "Gagal menyimpan gambar: " << PathCompareImgNegGray << '\n';
@@ -178,6 +216,10 @@ int main() {
     }
     if (!cv::imwrite(PathCompareFlipVertical, compareFlipVertical)) {
         std::cerr << "Gagal menyimpan gambar: " << PathCompareFlipVertical << '\n';
+        return 1;
+    }
+    if (!cv::imwrite(PathCompareRobertCross, compareRobertCross)) {
+        std::cerr << "Gagal menyimpan gambar: " << PathCompareRobertCross << '\n';
         return 1;
     }
 
