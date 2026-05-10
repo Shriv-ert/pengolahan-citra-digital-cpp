@@ -1,0 +1,11 @@
+CXX = g++
+
+INCLUDE = -IC:/msys64/ucrt64/include/opencv4
+LIBDIR = -LC:/msys64/ucrt64/lib
+LIBS = -lopencv_core -lopencv_imgcodecs -lopencv_highgui -lopencv_imgproc
+
+main.exe: main.cpp
+	g++ -std=c++17 -Wall -Wextra $(INCLUDE) main.cpp -o main.exe $(LIBDIR) $(LIBS)
+
+clean:
+	del /Q main.exe
