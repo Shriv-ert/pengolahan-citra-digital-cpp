@@ -1,5 +1,5 @@
 #include <opencv2/opencv.hpp>
-#include <cmath>
+#define M_PI 3.14159265358979323846
 
 // Tidak menggunakan using namespace std/cv agar lebih mudah untuk membedakan.
 
